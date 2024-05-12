@@ -330,9 +330,6 @@ class InpaintWithModel:
                 "mask": ("MASK",),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF}),
             },
-            "optional": {
-                "optional_upscale_model": ("UPSCALE_MODEL",),
-            },
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -345,7 +342,6 @@ class InpaintWithModel:
         image: Tensor,
         mask: Tensor,
         seed: int,
-        optional_upscale_model=None,
     ):
         if inpaint_model.model_arch == "MAT":
             required_size = 512
@@ -353,11 +349,6 @@ class InpaintWithModel:
             required_size = 256
         else:
             raise ValueError(f"Unknown model_arch {inpaint_model.model_arch}")
-
-        if optional_upscale_model != None:
-            from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel
-
-            upscaler = ImageUpscaleWithModel
 
         image, mask = to_torch(image, mask)
         batch_size = image.shape[0]
@@ -380,15 +371,80 @@ class InpaintWithModel:
             torch.manual_seed(seed)
             work_image = inpaint_model(work_image.to(device), work_mask.to(device))
 
-            if optional_upscale_model != None:
-                work_image = work_image.movedim(1, -1)
-                work_image = upscaler.upscale(
-                    upscaler, optional_upscale_model, work_image
-                )
-                work_image = work_image[0].movedim(-1, 1)
-
             work_image.to(image_device)
             work_image = undo_resize_square(work_image.to(image_device), original_size)
+            work_image = image[i] + (work_image - image[i]) * mask[i].floor()
+
+            batch_image.append(work_image)
+            pbar.update(1)
+
+        inpaint_model.cpu()
+        result = torch.cat(batch_image, dim=0)
+        return (to_comfy(result),)
+
+
+class InpaintWithModelAdvanced:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "inpaint_model": ("INPAINT_MODEL",),
+                "image": ("IMAGE",),
+                "mask": ("MASK",),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF}),
+                "resolution": ("INT", {"default": 512, "min": 0, "max": 2048}),
+            },
+            "optional": {
+                "optional_upscale_model": ("UPSCALE_MODEL",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "inpaint"
+    FUNCTION = "inpaint"
+
+    def inpaint(
+        self,
+        inpaint_model: PyTorchModel,
+        image: Tensor,
+        mask: Tensor,
+        seed: int,
+        resolution: int,
+        optional_upscale_model=None,
+    ):
+        
+        if optional_upscale_model != None:
+            from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel
+            upscaler = ImageUpscaleWithModel
+
+        image, mask = to_torch(image, mask)
+        batch_size = image.shape[0]
+        if mask.shape[0] != batch_size:
+            mask = mask[0].unsqueeze(0).repeat(batch_size, 1, 1, 1)
+
+        image_device = image.device
+        device = get_torch_device()
+        inpaint_model.to(device)
+        batch_image = []
+        pbar = ProgressBar(batch_size)
+
+        for i in trange(batch_size):
+            work_image, work_mask = image[i].unsqueeze(0), mask[i].unsqueeze(0)
+            if resolution > 0:
+                work_image, work_mask, original_size = resize_square(work_image, work_mask, resolution)
+            work_mask = work_mask.floor()
+
+            torch.manual_seed(seed)
+            work_image = inpaint_model(work_image.to(device), work_mask.to(device))
+
+            if optional_upscale_model != None and resolution > 0:
+                work_image = work_image.movedim(1, -1)
+                work_image = upscaler.upscale(upscaler, optional_upscale_model, work_image)
+                work_image = work_image[0].movedim(-1, 1)
+
+            work_image = work_image.to(image_device)
+            if resolution > 0:
+                work_image = undo_resize_square(work_image.to(image_device), original_size)
             work_image = image[i] + (work_image - image[i]) * mask[i].floor()
 
             batch_image.append(work_image)

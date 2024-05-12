@@ -61,11 +61,13 @@ Good for keeping the general colors the same.
 ### Inpaint Models (LaMA, MAT)
 
 This runs a small, fast inpaint model on the masked area. Models can be loaded with **Load Inpaint Model**
-and are applied with the **Inpaint (using Model)** node. This works well for outpainting or object removal.
+and are applied with the **Inpaint using Model** node. This works well for outpainting or object removal.
+
+**Inpaint using Model (Advanced)** adds an optional upscale model input, and resolution control (0 = original size, otherwise square reformat to resolution. MAT requires resolutions in multiples of 512.)
 
 The following inpaint models are supported, place them in `ComfyUI/models/inpaint`:
 - [LaMa](https://github.com/advimman/lama) | [Model download](https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt)
-- [MAT](https://github.com/fenglinglwb/MAT) | [Model download](https://github.com/Sanster/models/releases/download/add_mat/Places_512_FullData_G.pth) | [Model download (fp16 safetensors)](https://huggingface.co/Acly/MAT/resolve/main/MAT_Places512_G_fp16.safetensors)
+- [MAT](https://github.com/fenglinglwb/MAT) | [Model download, Places_512 only](https://github.com/Sanster/models/releases/download/add_mat/Places_512_FullData_G.pth) | [Model download (fp16 safetensors, 3 models)](https://huggingface.co/spacepxl/MAT-inpainting-fp16/tree/main)
 
 | Input | LaMa | MAT |
 |-|-|-|
@@ -97,11 +99,7 @@ Example workflows can be found in [workflows](workflows).
 
 ## Installation
 
-Use [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) and search for "ComfyUI Inpaint Nodes".
-
-_**or**_ download the repository and put the folder into `ComfyUI/custom_nodes`.
-
-_**or**_ use GIT:
+Use GIT:
 ```
 cd ComfyUI/custom_nodes
 git clone https://github.com/Acly/comfyui-inpaint-nodes.git

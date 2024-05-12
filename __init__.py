@@ -28,6 +28,7 @@ NODE_CLASS_MAPPINGS = {
     "INPAINT_MaskedBlur": nodes.MaskedBlur,
     "INPAINT_LoadInpaintModel": nodes.LoadInpaintModel,
     "INPAINT_InpaintWithModel": nodes.InpaintWithModel,
+    "INPAINT_InpaintWithModelAdvanced": nodes.InpaintWithModelAdvanced,
     "INPAINT_DenoiseToCompositingMask": nodes.DenoiseToCompositingMask,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -37,6 +38,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "INPAINT_MaskedFill": "Fill Masked Area",
     "INPAINT_MaskedBlur": "Blur Masked Area",
     "INPAINT_LoadInpaintModel": "Load Inpaint Model",
-    "INPAINT_InpaintWithModel": "Inpaint (using Model)",
+    "INPAINT_InpaintWithModel": "Inpaint using Model",
+    "INPAINT_InpaintWithModelAdvanced": "Inpaint using Model (Advanced)",
     "INPAINT_DenoiseToCompositingMask": "Denoise to Compositing Mask",
 }
